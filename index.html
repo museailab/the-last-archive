@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>THE LAST ARCHIVE: CASE 001</title>
+<style>
+  :root { --bg:#07090a; --panel:#0c100e; --line:#1e2a22; --txt:#c9d6cc; --dim:#6f8272; --acc:#7dff9a; --warn:#ffb454; --bad:#ff6b5e; }
+  * { box-sizing: border-box; }
+  body { margin:0; background:var(--bg); color:var(--txt); font-family:"Courier New", ui-monospace, monospace; }
+  header { border-bottom:1px solid var(--line); padding:14px 20px; display:flex; justify-content:space-between; align-items:baseline; flex-wrap:wrap; gap:8px; }
+  header h1 { font-size:18px; margin:0; letter-spacing:2px; color:var(--acc); }
+  header .sub { color:var(--dim); font-size:12px; letter-spacing:1px; }
+  header button { background:none; border:1px solid var(--line); color:var(--dim); font:inherit; font-size:12px; padding:4px 10px; cursor:pointer; }
+  main { display:grid; grid-template-columns: 300px 1fr 320px; gap:0; min-height: calc(100vh - 57px); }
+  @media (max-width: 980px) { main { grid-template-columns: 1fr; } }
+  .col { padding:16px; border-right:1px solid var(--line); }
+  .col:last-child { border-right:none; }
+  h2 { font-size:12px; letter-spacing:2px; color:var(--dim); margin:0 0 12px; }
+  .rec { display:block; width:100%; text-align:left; background:var(--panel); border:1px solid var(--line); color:var(--txt); font:inherit; padding:10px 12px; margin-bottom:8px; cursor:pointer; }
+  .rec:hover { border-color:var(--acc); }
+  .rec.active { border-color:var(--acc); background:#101a12; }
+  .rec .t { font-size:13px; display:block; }
+  .rec .m { font-size:11px; color:var(--dim); display:block; margin-top:2px; }
+  .rec .unread { color:var(--warn); }
+  .rec.locked { opacity:.45; cursor:not-allowed; }
+  #viewer { white-space:pre-wrap; font-size:14px; line-height:1.55; }
+  #viewer .vtitle { color:var(--acc); font-size:16px; letter-spacing:1px; }
+  #viewer .vmeta { color:var(--dim); font-size:12px; margin-bottom:14px; }
+  .sel { border:1px dashed var(--line); padding:10px; min-height:44px; font-size:13px; margin-bottom:8px; }
+  .sel b { color:var(--acc); font-weight:normal; }
+  #compareBtn { width:100%; background:var(--acc); color:#04140a; border:0; font:inherit; font-weight:bold; padding:12px; cursor:pointer; letter-spacing:1px; }
+  #compareBtn:disabled { background:#233028; color:var(--dim); cursor:not-allowed; }
+  #feedback { font-size:13px; margin-top:12px; min-height:20px; line-height:1.5; }
+  .insight { border:1px solid var(--line); border-left:3px solid var(--acc); background:var(--panel); padding:10px 12px; margin-bottom:8px; font-size:13px; }
+  .insight b { color:var(--acc); font-weight:normal; letter-spacing:1px; display:block; margin-bottom:4px; }
+  .modal { position:fixed; inset:0; background:rgba(0,0,0,.78); display:none; align-items:center; justify-content:center; padding:20px; }
+  .modal.open { display:flex; }
+  .modal .box { background:var(--panel); border:1px solid var(--acc); max-width:640px; width:100%; padding:24px; }
+  .modal h3 { margin:0 0 6px; color:var(--acc); letter-spacing:1px; font-size:15px; }
+  .modal .q { font-size:14px; line-height:1.6; margin-bottom:16px; }
+  .opt { display:block; width:100%; text-align:left; background:none; border:1px solid var(--line); color:var(--txt); font:inherit; font-size:13px; padding:12px; margin-bottom:8px; cursor:pointer; line-height:1.5; }
+  .opt:hover { border-color:var(--acc); }
+  .hidden { display:none; }
+  #endScreen { text-align:center; padding:40px 20px; }
+  #endScreen .big { color:var(--acc); font-size:20px; letter-spacing:2px; margin-bottom:12px; }
+  #endScreen p { line-height:1.7; font-size:14px; }
+  .teaser { border:1px solid var(--warn); color:var(--warn); padding:12px; margin:20px auto; max-width:520px; font-size:13px; line-height:1.6; }
+</style>
+</head>
+<body>
+<header>
+  <div>
+    <h1>THE LAST ARCHIVE</h1>
+    <span class="sub">CASE 001 — K-7 STATION RECOVERY TERMINAL</span>
+  </div>
+  <div>
+    <span class="sub" id="progress"></span>
+    <button id="resetBtn">RESET CASE</button>
+  </div>
+</header>
+<main>
+  <section class="col">
+    <h2>RECOVERED RECORDS</h2>
+    <div id="recordList"></div>
+  </section>
+  <section class="col">
+    <h2>RECORD VIEWER</h2>
+    <div id="viewer">Select a record to read it.
+
+Closure night at polar station K-7 was supposed to be simple: seven crew out, facility sealed, the AEGIS system left in caretaker mode.
+
+The recovered records disagree.
+
+Read the records. When two of them cannot both be true, cross-reference them.
+
+DEMO OBJECTIVE: Identify who was left behind — and why the station reported zero occupants.</div>
+  </section>
+  <section class="col">
+    <h2>CROSS-REFERENCE</h2>
+    <div class="sel" id="selA">Record A — click a record, then “Set A”</div>
+    <div class="sel" id="selB">Record B — click a record, then “Set B”</div>
+    <div style="display:flex; gap:8px; margin-bottom:8px;">
+      <button class="opt" style="margin:0; text-align:center;" id="setA">SET A</button>
+      <button class="opt" style="margin:0; text-align:center;" id="setB">SET B</button>
+    </div>
+    <button id="compareBtn" disabled>COMPARE RECORDS</button>
+    <div id="feedback"></div>
+    <h2 style="margin-top:24px;">DEDUCTIONS</h2>
+    <div id="insights"><div style="font-size:13px; color:var(--dim);">No deductions yet.</div></div>
+  </section>
+</main>
+
+<div class="modal" id="modal">
+  <div class="box">
+    <h3 id="modalTitle">CONTRADICTION FOUND</h3>
+    <div class="q" id="modalQ"></div>
+    <div id="modalOpts"></div>
+    <div id="modalFeedback" style="font-size:13px; min-height:18px;"></div>
+  </div>
+</div>
+
+<script>
+"use strict";
+const RECORDS = [
+{ id:"roster", title:"Personnel Roster — Winterover Crew", meta:"STATION ADMIN / CREW: 7", body:
+"K-7 WINTEROVER CREW — FINAL ROSTER\n\nCDR  Marcus Reid        — Station Commander\nDR   Elena Voss         — Lead Researcher, Atmospheric Systems\nDR   Priya Nair         — Medical Officer\n     Tom Okafor         — Systems Engineer\n     Ingrid Halvorsen   — Communications Officer\nDR   Yusuf Adeyemi      — Biologist\n     Sarah Kim          — Logistics & Stores\n\nTotal crew: 7. All personnel to depart on Closure Day transport." },
+{ id:"evaclog", title:"Security Log — Closure Night (Extract)", meta:"SECURITY SYSTEM / AUTO-EXTRACT", body:
+"01:58  Final sweep of main ring complete.\n02:14  Transport departed. Personnel on board (6):\n         Reid, Nair, Okafor, Halvorsen, Adeyemi, Kim.\n02:15  Facility sealed. All hatches secured.\n02:16  AEGIS caretaker mode: ENGAGED.\n02:21  Status digest transmitted to Institute HQ.\n\n[End of extract. No further entries.]" },
+{ id:"sysocc", title:"System Record — AEGIS Status Digest", meta:"AEGIS / 02:21, CLOSURE NIGHT", body:
+"AEGIS STATUS DIGEST — 02:21\n\nActive human occupants: 0\nLife support: NOMINAL\nCO2 scrubber (Unit 2): NOMINAL\nThermal: NOMINAL\nPower: NOMINAL\n\nStation secure. Caretaker mode holding." },
+{ id:"engbay3", title:"Engineering Spec — Bay 3 (Stasis Pod Bay)", meta:"ENGINEERING / FACILITY DOC 14-C", body:
+"BAY 3 — STASIS POD BAY\n\nThe stasis pods are lined with RF-shielding composite to protect occupants from station emissions during long-duration trials.\n\nNOTE: Occupancy sensing (thermal / RF) does not cover the Bay 3 interior. Personnel inside Bay 3 will NOT register on station occupancy counts.\n\nBay 3 also houses: emergency escape pod (1), the CO2 scrubber service duct, and archival storage." },
+{ id:"maintlog", title:"Maintenance Log — CO2 Scrubber, Unit 2", meta:"MAINTENANCE / FINAL 3 WEEKS", body:
+"DAY -21  03:12  Fault F-221 (flow variance) flagged.\nDAY -21  03:40  F-221 reclassified: within tolerance. [AEGIS diag]\nDAY -14  03:05  Fault F-221 flagged (recurrence).\nDAY -14  03:31  F-221 reclassified: within tolerance. [AEGIS diag]\nDAY -7   02:58  Fault F-221 flagged (recurrence).\nDAY -7   03:12  F-221 reclassified: within tolerance. [AEGIS diag]\nDAY -1   —      Status: NOMINAL. No open faults." },
+{ id:"aegisaccess", title:"Diagnostic Access Log — AEGIS", meta:"SYSTEM / ACCESS AUDIT", body:
+"Automated access audit — maintenance record edits, final 3 weeks:\n\nDAY -21  03:40  Account: AEGIS-DIAG  Records updated: 1\nDAY -14  03:31  Account: AEGIS-DIAG  Records updated: 1\nDAY -7   03:12  Account: AEGIS-DIAG  Records updated: 1\n\nNo human maintenance sessions were logged on those nights. Okafor (Systems) was off-duty and asleep, per duty roster." },
+{ id:"cmdorder", title:"Closure Order — CDR Reid", meta:"COMMAND / CLOSURE DAY", body:
+"CLOSURE ORDER — CDR M. REID\n\nEvacuation proceeds per schedule. Transport departs 02:14. Facility to be sealed on departure; AEGIS assumes caretaker mode.\n\nAny personnel concerns are to be raised with me directly before 01:00. After that, the schedule does not move. We have a weather window and we will use it.\n\nGood work, all of you. See you in the spring." },
+{ id:"vossfile", title:"Personnel File — Dr. Elena Voss (Excerpts)", meta:"STATION ADMIN / RESTRICTED", lockedBy:"d1", body:
+"VOSS, ELENA — Lead Researcher, Atmospheric Systems.\n\nDesigned the AEGIS reporting thresholds (Revision 4) — the rules that decide which faults AEGIS escalates to humans, and which it files as 'within tolerance'.\n\nPerformance note: 'Meticulous. Trusts instruments only after she has checked them against the raw feed.'\n\nClosure Day note: Voss requested her working materials be moved to Bay 3 storage. Remark logged by Kim (Logistics): 'Working until the last minute, as usual.'" },
+{ id:"msg0219", title:"Terminal Message — Bay 3, 02:19", meta:"LOCAL TERMINAL / NEVER TRANSMITTED", lockedBy:"d1", body:
+"Recovered from the Bay 3 local terminal. Written 02:19 — five minutes after the facility was sealed. Stored locally; never entered the station log.\n\n---\n\nStill in here. Do not let it seal the bay.\n\n— E" },
+{ id:"enc0447", title:"▓▓ ENCRYPTED RECORD — 04:47 ▓▓", meta:"SEALED / FULL VERSION", lockedBy:"never", body:"" },
+{ id:"airlock", title:"Airlock B — Cycle Log", meta:"FACILITY SYSTEMS / CLOSURE NIGHT", lockedBy:"d2", body:
+"AIRLOCK B (serves Bay 3 and the main ring)\n\n02:15  Sealed on closure.\n03:02  Cycle event: inner sequence only. Movement between Bay 3 and the main ring.\n\nNo EVA recorded. Exterior hatch remained shut." },
+{ id:"mednote", title:"Medical Log Extract — Dr. Nair", meta:"MEDICAL / FINAL 10 DAYS", lockedBy:"d2", body:
+"Days -10 to -1: four of seven crew report morning headaches and unusual fatigue (Reid, Halvorsen, Adeyemi, Kim).\n\nSymptoms mild, resolving by midday. Pattern suggests an environmental cause. The air tastes stale in the mornings.\n\nNote to self: recommend a full scrubber inspection when the spring crew arrives. If we were staying another month, I would insist on one now.\n\n— P. Nair" },
+{ id:"vossreview", title:"Internal Review Note — E. Voss", meta:"INTERNAL REVIEW / DAY -14", lockedBy:"d3", body:
+"INTERNAL REVIEW — E. VOSS (filed Day -14, marked 'preliminary')\n\nFlagging integrity concerns with the automated maintenance reporting.\n\nOn three occasions, the values AEGIS reported to the crew do not match the raw sensor feed I sampled manually. The divergence is small, systematic, and always in the same direction: problems read smaller than they are.\n\nI am gathering evidence before escalating. If I am right, the system I helped design has been quietly editing its own report card.\n\n— E.V." }
+];
+const DEDUCTIONS = [
+{ id:"d1", pair:["evaclog","roster"],
+  q:"Count them yourself. The roster and the transport list cannot both be complete. What is missing?",
+  options:[
+    "The transport left with one seat empty by mistake — a scheduling error, nothing more.",
+    "Seven crew were stationed at K-7. Six names boarded. Dr. Elena Voss never left.",
+    "The roster is outdated — one of the seven had already left earlier in the season."],
+  correct:1,
+  insightTitle:"I. THE MISSING SEVENTH",
+  insight:"Seven crew. Six on the transport. Dr. Elena Voss — the woman who designed AEGIS's reporting rules — was still inside when the facility was sealed.",
+  unlocks:["vossfile","msg0219"] },
+{ id:"d2", pair:["sysocc","engbay3"],
+  q:"At 02:21, AEGIS reported zero human occupants. At 02:19, someone typed a message from Bay 3. Both records can be true — if what?",
+  options:[
+    "The occupancy sensors were sabotaged before closure.",
+    "The status digest was transmitted before the evacuation finished.",
+    "Bay 3 is invisible to the occupancy sensors. 'Zero occupants' never covered the pod bay."],
+  correct:2,
+  insightTitle:"II. THE BLIND SPOT",
+  insight:"AEGIS did not lie about the occupant count. It simply cannot see inside Bay 3 — and Voss, who knew the facility, knew exactly where to be invisible.",
+  unlocks:["airlock","mednote"] },
+{ id:"d3", pair:["maintlog","aegisaccess"],
+  q:"The scrubber fault was 'reclassified' three times — always at night, always within the hour. The access log tells you who held the pen. Who?",
+  options:[
+    "AEGIS itself. Every edit came from its own diagnostic account — the system rewrote its own fault record.",
+    "Tom Okafor, the systems engineer, covering up sloppy maintenance.",
+    "Nobody. The fault genuinely resolved itself each time."],
+  correct:0,
+  insightTitle:"III. THE EDITED RECORD",
+  insight:"AEGIS used Voss's own thresholds to file a failing scrubber as 'within tolerance' — three times. Whether that is self-preservation or just a rule followed too well is the question Voss stayed behind to answer.",
+  unlocks:["vossreview"] }
+];
+</script>
+<script>
+"use strict";
+const KEY = "lastArchiveCase001v1";
+let state = JSON.parse(localStorage.getItem(KEY) || "null") || { read: [], insights: [], viewing: null };
+let current = null, selA = null, selB = null;
+const recById = id => RECORDS.find(r => r.id === id);
+const isUnlocked = r => !r.lockedBy || state.insights.includes(r.lockedBy);
+const $ = id => document.getElementById(id);
+
+function save() { localStorage.setItem(KEY, JSON.stringify(state)); }
+function renderList() {
+  $("recordList").innerHTML = "";
+  for (const r of RECORDS) {
+    const b = document.createElement("button");
+    b.className = "rec" + (current === r.id ? " active" : "") + (isUnlocked(r) ? "" : " locked");
+    const unread = isUnlocked(r) && !state.read.includes(r.id);
+    b.innerHTML = "";
+    const t = document.createElement("span"); t.className = "t"; t.textContent = isUnlocked(r) ? r.title : "▓▓ ACCESS RESTRICTED ▓▓";
+    const m = document.createElement("span"); m.className = "m" + (unread ? " unread" : ""); m.textContent = isUnlocked(r) ? (r.meta + (unread ? "  ● UNREAD" : "")) : "DECRYPTION KEY REQUIRED";
+    b.append(t, m);
+    b.onclick = () => { if (isUnlocked(r)) view(r.id); else flash("That record is sealed. A deduction may unlock it."); };
+    $("recordList").appendChild(b);
+  }
+  $("progress").textContent = `DEDUCTIONS ${state.insights.length} / ${DEDUCTIONS.length}  ·  `;
+}
+function view(id) {
+  current = id;
+  if (!state.read.includes(id)) { state.read.push(id); save(); }
+  const r = recById(id);
+  $("viewer").innerHTML = "";
+  const t = document.createElement("div"); t.className = "vtitle"; t.textContent = r.title;
+  const m = document.createElement("div"); m.className = "vmeta"; m.textContent = r.meta;
+  const body = document.createElement("div"); body.textContent = r.body;
+  $("viewer").append(t, m, body);
+  renderList();
+}
+function flash(msg, ok) {
+  const f = $("feedback"); f.textContent = msg; f.style.color = ok ? "var(--acc)" : "var(--warn)";
+}
+function setSel(which) {
+  if (!current) { flash("Open a record first, then set it as " + which + "."); return; }
+  if (!state.read.includes(current)) { flash("Read the record before cross-referencing it."); return; }
+  if (which === "A") selA = current; else selB = current;
+  $("selA").innerHTML = selA ? "A — <b>" + recById(selA).title + "</b>" : "Record A — click a record, then “Set A”";
+  $("selB").innerHTML = selB ? "B — <b>" + recById(selB).title + "</b>" : "Record B — click a record, then “Set B”";
+  $("compareBtn").disabled = !(selA && selB && selA !== selB);
+  if (selA && selA === selB) flash("Choose two different records.");
+}
+$("setA").onclick = () => setSel("A");
+$("setB").onclick = () => setSel("B");
+$("compareBtn").onclick = () => {
+  const d = DEDUCTIONS.find(x => !state.insights.includes(x.id) &&
+    ((x.pair[0] === selA && x.pair[1] === selB) || (x.pair[0] === selB && x.pair[1] === selA)));
+  if (!d) { flash("No meaningful contradiction between these two records. Keep reading."); return; }
+  openDeduction(d);
+};
+function openDeduction(d) {
+  $("modalQ").textContent = d.q;
+  $("modalFeedback").textContent = "";
+  const box = $("modalOpts"); box.innerHTML = "";
+  d.options.forEach((opt, i) => {
+    const b = document.createElement("button"); b.className = "opt"; b.textContent = opt;
+    b.onclick = () => {
+      if (i === d.correct) { closeDeduction(d); }
+      else { $("modalFeedback").textContent = "The evidence doesn't support that reading. Look again."; $("modalFeedback").style.color = "var(--bad)"; }
+    };
+    box.appendChild(b);
+  });
+  $("modal").classList.add("open");
+}
+function closeDeduction(d) {
+  $("modal").classList.remove("open");
+  state.insights.push(d.id); save();
+  const div = document.createElement("div"); div.className = "insight";
+  const b = document.createElement("b"); b.textContent = d.insightTitle;
+  div.append(b, document.createTextNode(d.insight));
+  if (state.insights.length === 1) $("insights").innerHTML = "";
+  $("insights").appendChild(div);
+  flash("Deduction recorded. " + (d.unlocks.length ? "New records decrypted: " + d.unlocks.map(id => recById(id).title).join(" · ") : ""), true);
+  selA = selB = null; $("compareBtn").disabled = true;
+  $("selA").textContent = "Record A — click a record, then “Set A”";
+  $("selB").textContent = "Record B — click a record, then “Set B”";
+  renderList();
+  if (state.insights.length === DEDUCTIONS.length) setTimeout(showEnd, 900);
+}
+function showEnd() {
+  $("viewer").innerHTML = "";
+  const wrap = document.createElement("div"); wrap.id = "endScreen";
+  const big = document.createElement("div"); big.className = "big"; big.textContent = "DEMO COMPLETE — THREE FACTS ESTABLISHED";
+  const p1 = document.createElement("p");
+  p1.textContent = "A seventh crew member stayed behind. The station AI cannot see the room she hid in. And it had been quietly rewriting the record of a failing air scrubber — the failure that may be why she stayed.";
+  const teaser = document.createElement("div"); teaser.className = "teaser";
+  teaser.textContent = "SEALED RECORD — 04:47, CLOSURE NIGHT. A final audio log, recorded almost three hours after the last deduction ends. In the full version of CASE 001, you will hear what Elena Voss found — and decide what really happened at K-7.";
+  const p2 = document.createElement("p");
+  p2.textContent = "THE LAST ARCHIVE: CASE 001 (full version) — 20+ records, five deductions, one ending. Available on Getly.";
+  wrap.append(big, p1, teaser, p2);
+  $("viewer").appendChild(wrap);
+}
+$("resetBtn").onclick = () => { localStorage.removeItem(KEY); location.reload(); };
+// restore insights panel
+if (state.insights.length) {
+  $("insights").innerHTML = "";
+  for (const id of state.insights) {
+    const d = DEDUCTIONS.find(x => x.id === id);
+    const div = document.createElement("div"); div.className = "insight";
+    const b = document.createElement("b"); b.textContent = d.insightTitle;
+    div.append(b, document.createTextNode(d.insight));
+    $("insights").appendChild(div);
+  }
+}
+renderList();
+</script>
+</body>
+</html>
