@@ -257,7 +257,21 @@ function showEnd() {
   teaser.textContent = "SEALED RECORD — 04:47, CLOSURE NIGHT. A final audio log, recorded almost three hours after the last deduction ends. In the full version of CASE 001, you will hear what Elena Voss found — and decide what really happened at K-7.";
   const p2 = document.createElement("p");
   p2.textContent = "THE LAST ARCHIVE: CASE 001 (full version) — 20+ records, five deductions, one ending. Available on Getly.";
-  wrap.append(big, p1, teaser, p2);
+  const cta = document.createElement("a");
+  cta.href = "https://www.getly.store/product/the-last-archive-case-001-deduction-game-full-version";
+  cta.target = "_blank";
+  cta.rel = "noopener";
+  cta.textContent = "Get the full version on Getly — $12.99";
+  cta.style.display = "inline-block";
+  cta.style.marginTop = "14px";
+  cta.style.padding = "12px 22px";
+  cta.style.border = "1px solid #7dff9a";
+  cta.style.borderRadius = "6px";
+  cta.style.color = "#7dff9a";
+  cta.style.textDecoration = "none";
+  cta.style.fontWeight = "bold";
+  cta.style.letterSpacing = "0.04em";
+  wrap.append(big, p1, teaser, p2, cta);
   $("viewer").appendChild(wrap);
 }
 $("resetBtn").onclick = () => { localStorage.removeItem(KEY); location.reload(); };
